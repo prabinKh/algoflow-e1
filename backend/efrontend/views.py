@@ -1,0 +1,241 @@
+from rest_framework import generics, permissions, filters, views, status
+from rest_framework.response import Response
+from django_filters.rest_framework import DjangoFilterBackend
+from .models import Category, Brand, Product, Order, OrderItem, HeroSetting, Wishlist, Review, StoreLocation, AIRecommendation
+from .serializers import (
+    CategorySerializer, BrandSerializer, ProductSerializer, OrderSerializer,
+    HeroSettingSerializer, WishlistSerializer, ReviewSerializer,
+    StoreLocationSerializer, AIRecommendationSerializer
+)
+
+
+class CategoryListView(generics.ListAPIView):
+    queryset = Category.objects.all()
+    serializer_class = CategorySerializer
+    permission_classes = (permissions.AllowAny,)
+
+
+class CategoryDetailView(generics.RetrieveAPIView):
+    queryset = Category.objects.all()
+    serializer_class = CategorySerializer
+    permission_classes = (permissions.AllowAny,)
+    lookup_field = 'slug'
+
+
+class BrandListView(generics.ListCreateAPIView):
+    queryset = Brand.objects.filter(is_active=True)
+    serializer_class = BrandSerializer
+    permission_classes = (permissions.AllowAny,)
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['name', 'description']
+    ordering_fields = ['name', 'created_at']
+
+    def get_permissions(self):
+        if self.request.method == 'POST':
+            return [permissions.IsAuthenticated()]
+        return [permissions.AllowAny()]
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        category = self.request.query_params.get('category')
+        if category:
+            queryset = queryset.filter(categories__slug=category)
+        return queryset.distinct()
+
+
+class BrandDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Brand.objects.all()
+    serializer_class = BrandSerializer
+    lookup_field = 'slug'
+
+    def get_permissions(self):
+        if self.request.method == 'GET':
+            return [permissions.AllowAny()]
+        return [permissions.IsAuthenticated()]
+
+
+class ProductListView(generics.ListAPIView):
+    queryset = Product.objects.all()
+    serializer_class = ProductSerializer
+    permission_classes = (permissions.AllowAny,)
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filterset_fields = ['category__slug', 'brand', 'is_new', 'is_best_seller', 'in_stock']
+    search_fields = ['name', 'brand', 'description']
+    ordering_fields = ['price', 'created_at', 'rating']
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        category = self.request.query_params.get('category')
+        if category:
+            queryset = queryset.filter(category__slug=category)
+        return queryset
+
+
+class ProductDetailView(generics.RetrieveAPIView):
+    queryset = Product.objects.all()
+    serializer_class = ProductSerializer
+    permission_classes = (permissions.AllowAny,)
+    lookup_field = 'slug'
+
+
+class HeroSettingView(generics.ListAPIView):
+    queryset = HeroSetting.objects.filter(is_active=True).order_by('order')
+    serializer_class = HeroSettingSerializer
+    permission_classes = (permissions.AllowAny,)
+
+
+class OrderCreateView(views.APIView):
+    """
+    Accept frontend order format:
+    {
+      uid, items: [{productId, name, price, quantity, image, features}],
+      totalAmount, subtotal, tax, discount,
+      shippingAddress: {address, city, phone},
+      customerName, customerEmail, status, paymentStatus, paymentMethod,
+      source, orderId, customerType
+    }
+    """
+    permission_classes = (permissions.AllowAny,)
+
+    def post(self, request):
+        data = request.data
+        shipping = data.get('shippingAddress') or {}
+        items = data.get('items') or []
+        if not items:
+            return Response({'error': 'Order items are required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        user = None
+        uid = data.get('uid') or ''
+        if uid and request.user.is_authenticated:
+            user = request.user
+        elif request.user.is_authenticated:
+            user = request.user
+
+        order = Order.objects.create(
+            user=user,
+            uid=uid,
+            order_id=data.get('orderId', ''),
+            email=data.get('customerEmail', ''),
+            full_name=data.get('customerName', ''),
+            address=shipping.get('address', ''),
+            city=shipping.get('city', ''),
+            phone=shipping.get('phone', ''),
+            subtotal=data.get('subtotal', 0),
+            tax=data.get('tax', 0),
+            discount=data.get('discount', 0),
+            total_amount=data.get('totalAmount', 0),
+            status=data.get('status', 'pending'),
+            payment_status=data.get('paymentStatus', 'unpaid'),
+            payment_method=data.get('paymentMethod', 'cash'),
+            source=data.get('source', 'store'),
+            customer_type=data.get('customerType', 'registered'),
+        )
+
+        for item in items:
+            product_id = item.get('productId') or item.get('product_id')
+            product = None
+            if product_id:
+                try:
+                    from django.db.models import Q
+                    product = Product.objects.filter(Q(id=product_id) | Q(slug=product_id)).first()
+                except Exception:
+                    pass
+            OrderItem.objects.create(
+                order=order,
+                product=product,
+                product_id_str=str(product_id) if product_id else '',
+                name=item.get('name', product.name if product else ''),
+                image=item.get('image', product.image if product else ''),
+                features=item.get('features', []),
+                quantity=item.get('quantity', 1),
+                price=item.get('price', 0),
+            )
+
+        return Response(OrderSerializer(order).data, status=status.HTTP_201_CREATED)
+
+
+class OrderTrackView(generics.RetrieveAPIView):
+    queryset = Order.objects.all()
+    serializer_class = OrderSerializer
+    permission_classes = (permissions.AllowAny,)
+
+    def get_object(self):
+        pk = self.kwargs.get('id')
+        try:
+            return Order.objects.get(id=pk)
+        except Order.DoesNotExist:
+            return Order.objects.get(order_id=pk)
+
+
+class MyOrdersView(generics.ListAPIView):
+    serializer_class = OrderSerializer
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def get_queryset(self):
+        return Order.objects.filter(user=self.request.user).order_by('-created_at')
+
+
+class WishlistViewSet(views.APIView):
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def get(self, request):
+        wishlist = Wishlist.objects.filter(user=request.user)
+        serializer = WishlistSerializer(wishlist, many=True)
+        return Response(serializer.data)
+
+    def post(self, request):
+        product_id = request.data.get('product_id')
+        try:
+            product = Product.objects.get(id=product_id)
+        except Product.DoesNotExist:
+            return Response({'error': 'Product not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        wishlist_item, created = Wishlist.objects.get_or_create(user=request.user, product=product)
+        if not created:
+            wishlist_item.delete()
+            return Response({'status': 'removed'})
+        return Response({'status': 'added'})
+
+
+class ReviewViewSet(views.APIView):
+    permission_classes = (permissions.AllowAny,)
+
+    def get(self, request, product_id):
+        reviews = Review.objects.filter(product_id=product_id)
+        serializer = ReviewSerializer(reviews, many=True)
+        return Response(serializer.data)
+
+    def post(self, request, product_id):
+        if not request.user.is_authenticated:
+            return Response({'error': 'Authentication required'}, status=status.HTTP_401_UNAUTHORIZED)
+        data = request.data.copy()
+        data['product'] = product_id
+        data['user'] = request.user.id
+        serializer = ReviewSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class StoreLocationView(generics.ListAPIView):
+    queryset = StoreLocation.objects.all()
+    serializer_class = StoreLocationSerializer
+    permission_classes = (permissions.AllowAny,)
+
+
+class AIRecommendationView(views.APIView):
+    permission_classes = (permissions.AllowAny,)
+
+    def post(self, request):
+        query = request.data.get('query', '')
+        products = Product.objects.all()[:20]
+        product_list = [{'name': p.name, 'brand': p.brand, 'price': float(p.price), 'category': p.category.name} for p in products]
+        rec = AIRecommendation.objects.create(
+            user=request.user if request.user.is_authenticated else None,
+            query=query,
+            recommendations=product_list[:5],
+            reasoning='Based on available products'
+        )
+        from .serializers import AIRecommendationSerializer
+        return Response(AIRecommendationSerializer(rec).data)
