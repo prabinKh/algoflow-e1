@@ -68,6 +68,10 @@ class ProductListView(generics.ListAPIView):
         category = self.request.query_params.get('category')
         if category:
             queryset = queryset.filter(category__slug=category)
+            
+        company = self.request.query_params.get('company')
+        if company:
+            queryset = queryset.filter(company__slug=company)
         return queryset
 
 
@@ -79,9 +83,17 @@ class ProductDetailView(generics.RetrieveAPIView):
 
 
 class HeroSettingView(generics.ListAPIView):
-    queryset = HeroSetting.objects.filter(is_active=True).order_by('order')
     serializer_class = HeroSettingSerializer
     permission_classes = (permissions.AllowAny,)
+
+    def get_queryset(self):
+        qs = HeroSetting.objects.filter(is_active=True).order_by('order')
+        company = self.request.query_params.get('company')
+        if company:
+            qs = qs.filter(company__slug=company)
+        else:
+            qs = qs.filter(company__isnull=True)
+        return qs
 
 
 class OrderCreateView(views.APIView):
@@ -111,47 +123,79 @@ class OrderCreateView(views.APIView):
         elif request.user.is_authenticated:
             user = request.user
 
-        order = Order.objects.create(
-            user=user,
-            uid=uid,
-            order_id=data.get('orderId', ''),
-            email=data.get('customerEmail', ''),
-            full_name=data.get('customerName', ''),
-            address=shipping.get('address', ''),
-            city=shipping.get('city', ''),
-            phone=shipping.get('phone', ''),
-            subtotal=data.get('subtotal', 0),
-            tax=data.get('tax', 0),
-            discount=data.get('discount', 0),
-            total_amount=data.get('totalAmount', 0),
-            status=data.get('status', 'pending'),
-            payment_status=data.get('paymentStatus', 'unpaid'),
-            payment_method=data.get('paymentMethod', 'cash'),
-            source=data.get('source', 'store'),
-            customer_type=data.get('customerType', 'registered'),
-        )
-
+        # Group items by company
+        company_items_map = {}
         for item in items:
             product_id = item.get('productId') or item.get('product_id')
             product = None
+            company = None
             if product_id:
                 try:
                     from django.db.models import Q
                     product = Product.objects.filter(Q(id=product_id) | Q(slug=product_id)).first()
+                    if product and product.company:
+                        company = product.company
                 except Exception:
                     pass
-            OrderItem.objects.create(
-                order=order,
-                product=product,
-                product_id_str=str(product_id) if product_id else '',
-                name=item.get('name', product.name if product else ''),
-                image=item.get('image', product.image if product else ''),
-                features=item.get('features', []),
-                quantity=item.get('quantity', 1),
-                price=item.get('price', 0),
-            )
+            
+            item['_product'] = product
+            company_id = company.id if company else None
+            if company_id not in company_items_map:
+                company_items_map[company_id] = {
+                    'company': company,
+                    'items': [],
+                    'subtotal': 0
+                }
+            
+            company_items_map[company_id]['items'].append(item)
+            company_items_map[company_id]['subtotal'] += float(item.get('price', 0)) * int(item.get('quantity', 1))
 
-        return Response(OrderSerializer(order).data, status=status.HTTP_201_CREATED)
+        created_orders = []
+        base_order_id = data.get('orderId', '')
+        
+        for idx, (comp_id, group) in enumerate(company_items_map.items()):
+            subtotal = group['subtotal']
+            
+            # If split order, suffix the ID
+            order_id = f"{base_order_id}-{idx+1}" if len(company_items_map) > 1 and base_order_id else base_order_id
+            
+            order = Order.objects.create(
+                user=user,
+                company=group['company'],
+                uid=uid,
+                order_id=order_id,
+                email=data.get('customerEmail', ''),
+                full_name=data.get('customerName', ''),
+                address=shipping.get('address', ''),
+                city=shipping.get('city', ''),
+                phone=shipping.get('phone', ''),
+                subtotal=subtotal,
+                tax=0,  # simplified for split
+                discount=0, # simplified for split
+                total_amount=subtotal, # simplified
+                status=data.get('status', 'pending'),
+                payment_status=data.get('paymentStatus', 'unpaid'),
+                payment_method=data.get('paymentMethod', 'cash'),
+                source=data.get('source', 'store'),
+                customer_type=data.get('customerType', 'registered'),
+            )
+            created_orders.append(order)
+            
+            for item in group['items']:
+                product = item['_product']
+                OrderItem.objects.create(
+                    order=order,
+                    product=product,
+                    product_id_str=str(product.id) if product else str(item.get('productId', '')),
+                    name=item.get('name', product.name if product else ''),
+                    image=item.get('image', product.image if product else ''),
+                    features=item.get('features', []),
+                    quantity=item.get('quantity', 1),
+                    price=item.get('price', 0),
+                )
+
+        # Return the first order data for frontend compatibility
+        return Response(OrderSerializer(created_orders[0]).data, status=status.HTTP_201_CREATED)
 
 
 class OrderTrackView(generics.RetrieveAPIView):
@@ -219,9 +263,15 @@ class ReviewViewSet(views.APIView):
 
 
 class StoreLocationView(generics.ListAPIView):
-    queryset = StoreLocation.objects.all()
     serializer_class = StoreLocationSerializer
     permission_classes = (permissions.AllowAny,)
+
+    def get_queryset(self):
+        qs = StoreLocation.objects.all()
+        company = self.request.query_params.get('company')
+        if company:
+            qs = qs.filter(company__slug=company)
+        return qs
 
 
 class AIRecommendationView(views.APIView):

@@ -3,8 +3,34 @@
  * All data is fetched from the Django REST API — no static arrays here.
  */
 
+export type CompanyGalleryImage = {
+  id: number;
+  image: string;
+  created_at: string;
+};
+
+export type Company = {
+  id: number;
+  name: string;
+  slug: string;
+  description?: string;
+  logo?: string;
+  banner?: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  website?: string;
+  owner?: string;
+  owner_name?: string;
+  created_at?: string;
+  updated_at?: string;
+  gallery_images?: CompanyGalleryImage[];
+  products?: Product[];
+};
+
 export type Product = {
   id: string;
+  company?: number;
   name: string;
   slug: string;
   category: string;

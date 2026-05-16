@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { ArrowRight, Cpu, MemoryStick, HardDrive, Monitor } from "lucide-react";
 import { CachedImage } from "@/components/ui/cached-image";
 import { heroService, type HeroContent, type HeroSpec } from "@/api/heroService";
+import { useStore } from "@/frontend/context/StoreContext";
 
 const defaultHero: HeroContent = {
   title: "Precision Tools for Modern Workflow",
@@ -17,16 +18,17 @@ const defaultHero: HeroContent = {
 
 export const HeroBanner = () => {
   const [content, setContent] = useState<HeroContent>(defaultHero);
+  const { companySlug } = useStore();
 
   useEffect(() => {
     const fetchHero = async () => {
-      const data = await heroService.getSettings();
+      const data = await heroService.getSettings({ company: companySlug });
       if (data) {
         setContent(data);
       }
     };
     fetchHero();
-  }, []);
+  }, [companySlug]);
 
   return (
     <div className="relative overflow-hidden rounded-[var(--radius-outer)] bg-gradient-to-br from-foreground via-foreground to-primary/20 text-background min-h-[400px] sm:min-h-[450px] lg:min-h-[500px] flex items-center">

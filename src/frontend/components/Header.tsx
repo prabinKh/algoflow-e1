@@ -15,6 +15,7 @@ import { useAuth } from "@/context/AuthContext";
 
 import { useCategories } from "@/hooks/useCategories";
 import { useProducts } from "@/hooks/useProducts";
+import { useStore } from "@/frontend/context/StoreContext";
 
 export const Header = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -32,6 +33,7 @@ export const Header = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const { categories } = useCategories();
   const { products: dbProducts } = useProducts();
+  const { company } = useStore();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -226,15 +228,17 @@ export const Header = () => {
             <div className="flex items-center gap-2 sm:gap-4 shrink-0">
               <Link to="/" className="flex items-center gap-2 group">
                 <div className="relative flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 bg-primary rounded-xl shadow-lg shadow-primary/20 group-hover:scale-110 transition-transform duration-300">
-                  <span className="text-primary-foreground font-display font-black text-lg sm:text-xl">A</span>
+                  {company?.logo ? <img src={company.logo} alt={company.name} className="w-full h-full object-contain rounded-xl" /> : <span className="text-primary-foreground font-display font-black text-lg sm:text-xl">{company?.name?.charAt(0) || 'A'}</span>}
                   <div className="absolute -inset-1 bg-primary/20 rounded-2xl blur-sm opacity-0 group-hover:opacity-100 transition-opacity" />
                 </div>
                 <div className="flex flex-col -space-y-1">
                   <span className="text-lg sm:text-2xl font-display font-black tracking-tighter text-foreground group-hover:text-primary transition-colors">
-                    algoflow<span className="text-primary">-e</span>
+                    {company ? company.name : (
+                      <>algoflow<span className="text-primary">-e</span></>
+                    )}
                   </span>
                   <span className="text-[8px] sm:text-[10px] font-bold uppercase tracking-[0.3em] text-muted-foreground/60 hidden sm:block">
-                    Premium Tech Store
+                    {company ? 'Premium Vendor' : 'Premium Tech Store'}
                   </span>
                 </div>
               </Link>
@@ -343,7 +347,7 @@ export const Header = () => {
 
                     <div className="p-4 border-t border-border bg-accent/10">
                       <p className="text-[10px] text-center text-muted-foreground uppercase tracking-[0.2em]">
-                        algoflow-e navigation
+                        {company ? `${company.name} navigation` : 'algoflow-e navigation'}
                       </p>
                     </div>
                   </div>
@@ -657,10 +661,12 @@ export const Header = () => {
             <div className="p-4 border-b border-border flex items-center justify-between">
               <Link to="/" className="flex items-center gap-2 group" onClick={() => setMobileMenuOpen(false)}>
                 <div className="relative flex items-center justify-center w-8 h-8 bg-primary rounded-lg shadow-lg shadow-primary/20">
-                  <span className="text-primary-foreground font-display font-black text-base">A</span>
+                  {company?.logo ? <img src={company.logo} alt={company.name} className="w-full h-full object-contain rounded-lg" /> : <span className="text-primary-foreground font-display font-black text-base">{company?.name?.charAt(0) || 'A'}</span>}
                 </div>
-                <span className="text-lg font-display font-black tracking-tighter text-foreground">
-                  algoflow<span className="text-primary">-e</span>
+                <span className="font-display font-black text-xl tracking-tight hidden sm:block">
+                  {company ? company.name : (
+                    <>algoflow<span className="text-primary">-e</span></>
+                  )}
                 </span>
               </Link>
               <button onClick={() => setMobileMenuOpen(false)} className="p-2 hover:bg-accent rounded-full">

@@ -3,9 +3,10 @@ import { type Product } from "@/lib/types";
 const API_BASE = "/api/store";
 
 export const productService = {
-  async getAll() {
+  async getAll(options?: { company?: string }) {
     try {
-      const response = await fetch(`${API_BASE}/products/`);
+      const url = options?.company ? `${API_BASE}/products/?company=${options.company}` : `${API_BASE}/products/`;
+      const response = await fetch(url);
       if (!response.ok) throw new Error("Failed to fetch products");
       return await response.json() as Product[];
     } catch (error) {
@@ -38,9 +39,11 @@ export const productService = {
     }
   },
 
-  async getByCategory(categorySlug: string) {
+  async getByCategory(categorySlug: string, options?: { company?: string }) {
     try {
-      const response = await fetch(`${API_BASE}/products/?category=${categorySlug}`);
+      let url = `${API_BASE}/products/?category=${categorySlug}`;
+      if (options?.company) url += `&company=${options.company}`;
+      const response = await fetch(url);
       if (!response.ok) throw new Error("Failed to fetch products by category");
       return await response.json() as Product[];
     } catch (error) {

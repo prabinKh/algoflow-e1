@@ -27,6 +27,7 @@ INSTALLED_APPS = [
     "eadmin",
     "efrontend",
     "chatapp",
+    "company",
 ]
 
 MIDDLEWARE = [

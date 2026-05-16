@@ -58,6 +58,11 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { ScrollProgressBar } from "@/components/ScrollProgressBar";
+import VendorDashboard from "./frontend/vendor/VendorDashboard";
+import CreateCompany from "./frontend/company/CreateCompany";
+import CompanyProfile from "./frontend/company/CompanyProfile";
+import CompanyList from "./frontend/company/CompanyList";
+import StoreFront from "./frontend/StoreFront";
 import { ScrollToTop } from "@/components/ScrollToTop";
 import { ScrollToTopOnMount } from "@/components/ScrollToTopOnMount";
 import { useEffect } from "react";
@@ -107,6 +112,11 @@ function AppContent() {
         <Route path="/" element={<Index />} />
       <Route path="/category/:slug" element={<CategoryPage />} />
       <Route path="/product/:slug" element={<ProductDetailPage />} />
+      <Route path="/store/:company_slug/*" element={<StoreFront />} />
+      <Route path="/companies" element={<CompanyList />} />
+      <Route path="/companies/create" element={<CreateCompany />} />
+      <Route path="/companies/:slug" element={<CompanyProfile />} />
+      <Route path="/vendor/dashboard" element={<VendorDashboard />} />
       <Route path="/checkout" element={<CheckoutPage />} />
       <Route path="/order-success" element={<OrderSuccessPage />} />
       <Route path="/compare" element={<ComparePage />} />

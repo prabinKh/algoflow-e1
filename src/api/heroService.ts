@@ -16,9 +16,10 @@ export interface HeroContent {
 }
 
 export const heroService = {
-  getSettings: async (): Promise<HeroContent | null> => {
+  getSettings: async (options?: { company?: string }): Promise<HeroContent | null> => {
     try {
-      const response = await fetch("/api/store/hero-settings/");
+      const url = options?.company ? `/api/store/hero-settings/?company=${options.company}` : "/api/store/hero-settings/";
+      const response = await fetch(url);
       if (!response.ok) throw new Error("Failed to fetch hero settings");
       const data = await response.json();
       // Django returns a list, we want the first one or null

@@ -41,6 +41,7 @@ class Brand(models.Model):
 
 
 class Product(models.Model):
+    company = models.ForeignKey('company.Company', on_delete=models.SET_NULL, null=True, blank=True, related_name='products')
     category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='products')
     brand = models.ForeignKey(Brand, on_delete=models.SET_NULL, null=True, blank=True, related_name='products')
     brand_name = models.CharField(max_length=100, blank=True, default='')  # Keep for backward compatibility during migration
@@ -99,6 +100,7 @@ class Order(models.Model):
     ]
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True)
+    company = models.ForeignKey('company.Company', on_delete=models.SET_NULL, null=True, blank=True, related_name='orders')
     uid = models.CharField(max_length=255, blank=True, default='')   # Firebase UID or Django user id str
     order_id = models.CharField(max_length=100, blank=True, default='')  # Human-readable like POS-123456
     email = models.EmailField(blank=True, default='')
@@ -139,6 +141,7 @@ class OrderItem(models.Model):
 
 
 class HeroSetting(models.Model):
+    company = models.ForeignKey('company.Company', on_delete=models.SET_NULL, null=True, blank=True, related_name='hero_settings')
     title = models.CharField(max_length=200)
     subtitle = models.TextField()
     image = models.URLField()
@@ -166,6 +169,7 @@ class Review(models.Model):
 
 
 class StoreLocation(models.Model):
+    company = models.ForeignKey('company.Company', on_delete=models.SET_NULL, null=True, blank=True, related_name='store_locations')
     name = models.CharField(max_length=200)
     address = models.TextField()
     city = models.CharField(max_length=100)

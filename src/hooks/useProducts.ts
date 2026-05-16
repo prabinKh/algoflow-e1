@@ -3,11 +3,15 @@ import { useQuery } from '@tanstack/react-query';
 import { productService } from '@/api/productService';
 
 
+import { useStore } from '@/frontend/context/StoreContext';
+
 export const useProducts = () => {
+  const { companySlug } = useStore();
+  
   const { data: dbProducts = [], isLoading: loading } = useQuery({
-    queryKey: ['products'],
-    queryFn: () => productService.getAll(),
-    refetchInterval: 30000, // Optional: poll every 30 seconds
+    queryKey: ['products', companySlug],
+    queryFn: () => productService.getAll({ company: companySlug }),
+    refetchInterval: 30000,
   });
 
   const allProducts = useMemo(() => {

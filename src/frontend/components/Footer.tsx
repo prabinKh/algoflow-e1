@@ -2,8 +2,10 @@ import { Link } from "react-router-dom";
 import { Mail, Clock, MapPin, Phone } from "lucide-react";
 import { useRef } from "react";
 import { useGSAPReveal } from "@/hooks/useGSAP";
+import { useStore } from "@/frontend/context/StoreContext";
 
 export const Footer = () => {
+  const { company } = useStore();
   const footerRef = useRef<HTMLElement>(null);
   
   useGSAPReveal(footerRef, ".gsap-reveal", { opacity: 0, y: 30, duration: 0.8, stagger: 0.1 });
@@ -23,20 +25,35 @@ export const Footer = () => {
         <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-8 sm:gap-12">
           {/* Brand */}
           <div className="col-span-2 sm:col-span-1 gsap-reveal">
-            <div className="text-3xl sm:text-4xl font-display font-bold tracking-tighter text-foreground mb-4">algoflow-e</div>
+            <div className="text-3xl sm:text-4xl font-display font-bold tracking-tighter text-foreground mb-4">{company ? company.name : 'algoflow-e'}</div>
             <div className="space-y-3 text-sm sm:text-base">
               <div className="flex items-center gap-2">
                 <Mail size={14} className="shrink-0" />
-                <span>contact@algoflow-e.com</span>
+                <span>{company?.email || 'contact@algoflow-e.com'}</span>
               </div>
-              <div className="flex items-center gap-2">
-                <Clock size={14} className="shrink-0" />
-                <span>Sun - Fri: 10AM - 7:30PM</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Clock size={14} className="shrink-0" />
-                <span>Saturday: 11AM - 6PM</span>
-              </div>
+              {company?.phone && (
+                <div className="flex items-center gap-2">
+                  <Phone size={14} className="shrink-0" />
+                  <span>{company.phone}</span>
+                </div>
+              )}
+              {company?.address ? (
+                <div className="flex items-center gap-2">
+                  <MapPin size={14} className="shrink-0" />
+                  <span>{company.address}</span>
+                </div>
+              ) : (
+                <>
+                  <div className="flex items-center gap-2">
+                    <Clock size={14} className="shrink-0" />
+                    <span>Sun - Fri: 10AM - 7:30PM</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Clock size={14} className="shrink-0" />
+                    <span>Saturday: 11AM - 6PM</span>
+                  </div>
+                </>
+              )}
             </div>
           </div>
 
@@ -71,24 +88,26 @@ export const Footer = () => {
           </div>
         </div>
 
-        {/* Store Locations */}
-        <div className="mt-10 sm:mt-16 pt-6 sm:pt-8 border-t border-border gsap-reveal">
-          <h3 className="text-sm sm:text-base font-semibold uppercase tracking-wider text-foreground mb-4 sm:mb-6 text-center">Our Store Locations</h3>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 sm:gap-6">
-            {storeLocations.map(loc => (
-              <div key={loc.name} className="text-xs sm:text-sm space-y-1.5 bg-muted/50 rounded-xl p-4">
-                <p className="font-semibold text-foreground">{loc.name}</p>
-                <p className="text-muted-foreground leading-relaxed">{loc.address}</p>
-                <p className="flex items-center gap-1.5 text-muted-foreground mt-2">
-                  <Phone size={12} /> {loc.phone}
-                </p>
-              </div>
-            ))}
+        {/* Store Locations - only show if no specific company context */}
+        {!company && (
+          <div className="mt-10 sm:mt-16 pt-6 sm:pt-8 border-t border-border gsap-reveal">
+            <h3 className="text-sm sm:text-base font-semibold uppercase tracking-wider text-foreground mb-4 sm:mb-6 text-center">Our Store Locations</h3>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 sm:gap-6">
+              {storeLocations.map(loc => (
+                <div key={loc.name} className="text-xs sm:text-sm space-y-1.5 bg-muted/50 rounded-xl p-4">
+                  <p className="font-semibold text-foreground">{loc.name}</p>
+                  <p className="text-muted-foreground leading-relaxed">{loc.address}</p>
+                  <p className="flex items-center gap-1.5 text-muted-foreground mt-2">
+                    <Phone size={12} /> {loc.phone}
+                  </p>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
         <div className="mt-8 sm:mt-12 pt-4 sm:pt-6 border-t border-border text-center text-xs sm:text-sm text-muted-foreground/60 gsap-reveal">
-          © {new Date().getFullYear()} algoflow-e – All Rights Reserved
+          © {new Date().getFullYear()} {company ? company.name : 'algoflow-e'} – All Rights Reserved
         </div>
       </div>
     </footer>

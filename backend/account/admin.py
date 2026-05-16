@@ -1,9 +1,9 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from .models import MyUser, LoginAttempt, Note
+from fixitall_backend.admin_site import fixitall_admin
 
 
-@admin.register(MyUser)
 class MyUserAdmin(UserAdmin):
     list_display = ('email', 'name', 'is_admin', 'is_staff', 'is_superuser', 'is_active', 'created_at')
     list_filter = ('is_admin', 'is_staff', 'is_superuser', 'is_active', 'created_at')
@@ -28,7 +28,6 @@ class MyUserAdmin(UserAdmin):
     )
 
 
-@admin.register(LoginAttempt)
 class LoginAttemptAdmin(admin.ModelAdmin):
     list_display = ('email', 'ip_address', 'successful', 'attempted_at', 'user_agent')
     list_filter = ('successful', 'attempted_at')
@@ -36,8 +35,13 @@ class LoginAttemptAdmin(admin.ModelAdmin):
     readonly_fields = ('attempted_at',)
 
 
-@admin.register(Note)
 class NoteAdmin(admin.ModelAdmin):
     list_display = ('title', 'owner', 'created_at')
     search_fields = ('title', 'owner__email')
     readonly_fields = ('created_at', 'updated_at')
+
+
+# Register with custom admin site
+fixitall_admin.register(MyUser, MyUserAdmin)
+fixitall_admin.register(LoginAttempt, LoginAttemptAdmin)
+fixitall_admin.register(Note, NoteAdmin)

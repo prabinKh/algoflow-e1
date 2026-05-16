@@ -1,5 +1,9 @@
 from django.contrib import admin
-from .models import Category, Product, Order, OrderItem, HeroSetting, Wishlist, Review, StoreLocation
+from .models import (
+    Category, Brand, Product, Order, OrderItem,
+    HeroSetting, Wishlist, Review, StoreLocation, AIRecommendation,
+)
+from fixitall_backend.admin_site import fixitall_admin
 
 
 class OrderItemInline(admin.TabularInline):
@@ -8,48 +12,78 @@ class OrderItemInline(admin.TabularInline):
     readonly_fields = ('product', 'product_id_str', 'name', 'image', 'quantity', 'price')
 
 
-@admin.register(Category)
+class VendorRestrictedAdmin(admin.ModelAdmin):
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        if request.user.is_superuser:
+            return qs
+        return qs.filter(company__owner=request.user)
+
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == "company" and not request.user.is_superuser:
+            from company.models import Company
+            kwargs["queryset"] = Company.objects.filter(owner=request.user)
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
+    def save_model(self, request, obj, form, change):
+        if not request.user.is_superuser and getattr(obj, 'company', None) is None:
+            companies = request.user.companies.all()
+            if companies.exists():
+                obj.company = companies.first()
+        super().save_model(request, obj, form, change)
+
 class CategoryAdmin(admin.ModelAdmin):
     list_display = ('name', 'slug', 'icon')
     search_fields = ('name', 'slug')
     prepopulated_fields = {'slug': ('name',)}
 
 
-@admin.register(Product)
-class ProductAdmin(admin.ModelAdmin):
-    list_display = ('name', 'brand', 'category', 'price', 'stock', 'in_stock', 'is_new', 'rating', 'created_at')
-    list_filter = ('category', 'brand', 'in_stock', 'is_new', 'is_best_seller', 'is_popular', 'is_offer')
-    search_fields = ('name', 'brand', 'description')
+class ProductAdmin(VendorRestrictedAdmin):
+    list_display = ('name', 'company', 'brand', 'category', 'price', 'stock', 'in_stock', 'is_new', 'rating', 'created_at')
+    list_filter = ('company', 'category', 'brand', 'in_stock', 'is_new', 'is_best_seller', 'is_popular', 'is_offer')
+    search_fields = ('name', 'brand', 'description', 'company__name')
     prepopulated_fields = {'slug': ('name',)}
     list_editable = ('price', 'stock', 'in_stock')
     readonly_fields = ('created_at',)
     ordering = ('-created_at',)
 
 
-@admin.register(Order)
-class OrderAdmin(admin.ModelAdmin):
-    list_display = ('order_id', 'full_name', 'email', 'total_amount', 'status', 'payment_status', 'payment_method', 'source', 'created_at')
-    list_filter = ('status', 'payment_status', 'payment_method', 'source', 'created_at')
-    search_fields = ('order_id', 'full_name', 'email', 'phone')
+class BrandAdmin(admin.ModelAdmin):
+    list_display = ('name', 'slug', 'is_active', 'created_at')
+    list_filter = ('is_active',)
+    search_fields = ('name', 'slug')
+    prepopulated_fields = {'slug': ('name',)}
+    readonly_fields = ('created_at', 'updated_at')
+
+
+class OrderAdmin(VendorRestrictedAdmin):
+    list_display = ('order_id', 'company', 'full_name', 'email', 'total_amount', 'status', 'payment_status', 'payment_method', 'source', 'created_at')
+    list_filter = ('company', 'status', 'payment_status', 'payment_method', 'source', 'created_at')
+    search_fields = ('order_id', 'full_name', 'email', 'phone', 'company__name')
     list_editable = ('status', 'payment_status')
     readonly_fields = ('created_at', 'updated_at')
     inlines = [OrderItemInline]
     ordering = ('-created_at',)
 
 
-@admin.register(OrderItem)
 class OrderItemAdmin(admin.ModelAdmin):
     list_display = ('order', 'name', 'quantity', 'price')
     search_fields = ('name', 'order__order_id')
 
 
-@admin.register(HeroSetting)
-class HeroSettingAdmin(admin.ModelAdmin):
-    list_display = ('title', 'is_active', 'order')
+class HeroSettingAdmin(VendorRestrictedAdmin):
+    list_display = ('title', 'company', 'is_active', 'order')
+    list_filter = ('company', 'is_active')
     list_editable = ('is_active', 'order')
 
 
-@admin.register(Review)
+class WishlistAdmin(admin.ModelAdmin):
+    list_display = ('user', 'product', 'added_at')
+    list_filter = ('added_at',)
+    search_fields = ('user__email', 'product__name')
+    readonly_fields = ('added_at',)
+
+
 class ReviewAdmin(admin.ModelAdmin):
     list_display = ('product', 'user', 'rating', 'created_at')
     list_filter = ('rating', 'created_at')
@@ -57,7 +91,26 @@ class ReviewAdmin(admin.ModelAdmin):
     readonly_fields = ('created_at',)
 
 
-@admin.register(StoreLocation)
-class StoreLocationAdmin(admin.ModelAdmin):
-    list_display = ('name', 'city', 'phone', 'email')
-    search_fields = ('name', 'city')
+class StoreLocationAdmin(VendorRestrictedAdmin):
+    list_display = ('name', 'company', 'city', 'phone', 'email')
+    list_filter = ('company',)
+    search_fields = ('name', 'city', 'company__name')
+
+
+class AIRecommendationAdmin(admin.ModelAdmin):
+    list_display = ('user', 'query', 'created_at')
+    search_fields = ('query', 'user__email')
+    readonly_fields = ('created_at',)
+
+
+# Register all with custom admin site
+fixitall_admin.register(Category, CategoryAdmin)
+fixitall_admin.register(Brand, BrandAdmin)
+fixitall_admin.register(Product, ProductAdmin)
+fixitall_admin.register(Order, OrderAdmin)
+fixitall_admin.register(OrderItem, OrderItemAdmin)
+fixitall_admin.register(HeroSetting, HeroSettingAdmin)
+fixitall_admin.register(Wishlist, WishlistAdmin)
+fixitall_admin.register(Review, ReviewAdmin)
+fixitall_admin.register(StoreLocation, StoreLocationAdmin)
+fixitall_admin.register(AIRecommendation, AIRecommendationAdmin)
