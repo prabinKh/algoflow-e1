@@ -5,15 +5,28 @@ from account.models import MyUser as User
 
 
 class UserActivitySerializer(serializers.ModelSerializer):
+<<<<<<< HEAD
     pageType = serializers.CharField(source='page_type', required=False)
     userAgent = serializers.CharField(source='user_agent', required=False, allow_blank=True, default='')
     screenResolution = serializers.CharField(source='screen_resolution', required=False, allow_blank=True, default='')
     uid = serializers.CharField(required=False, write_only=True, allow_blank=True)
+=======
+    uid = serializers.CharField(required=False, write_only=True, allow_blank=True, allow_null=True)
+    email = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    pageType = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    page_type = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    path = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    duration = serializers.IntegerField(required=False, allow_null=True)
+    metadata = serializers.JSONField(required=False, allow_null=True)
+    userAgent = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    screenResolution = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+>>>>>>> dev
     displayName = serializers.SerializerMethodField()
 
     def get_displayName(self, obj):
         if obj.user:
             return obj.user.name or obj.user.email
+<<<<<<< HEAD
         return obj.email or 'Anonymous'
 
     def create(self, validated_data):
@@ -21,6 +34,39 @@ class UserActivitySerializer(serializers.ModelSerializer):
         if uid:
             # Safe user lookup: handle UUID and firebase_uid
             user = None
+=======
+        if isinstance(obj.details, dict):
+            return obj.details.get('email') or 'Anonymous'
+        return 'Anonymous'
+
+    def create(self, validated_data):
+        request = self.context.get('request')
+        company_obj = None
+        ip_address = None
+        if request:
+            from company.models import Company
+            company_obj = Company.resolve_from_request(request)
+            ip_address = request.META.get('HTTP_X_FORWARDED_FOR')
+            if ip_address:
+                ip_address = ip_address.split(',')[0].strip()
+            else:
+                ip_address = request.META.get('REMOTE_ADDR')
+
+        # Pop all non-model fields
+        uid = validated_data.pop('uid', None)
+        email = validated_data.pop('email', None)
+        page_type = validated_data.pop('page_type', None) or validated_data.pop('pageType', None)
+        path = validated_data.pop('path', None)
+        duration = validated_data.pop('duration', None)
+        metadata = validated_data.pop('metadata', None)
+        user_agent = validated_data.pop('user_agent', None) or validated_data.pop('userAgent', None) or ''
+        screen_resolution = validated_data.pop('screen_resolution', None) or validated_data.pop('screenResolution', None)
+
+        user = None
+        if request and request.user and request.user.is_authenticated:
+            user = request.user
+        elif uid:
+>>>>>>> dev
             try:
                 import uuid as _uuid
                 uid_as_uuid = _uuid.UUID(str(uid))
@@ -29,11 +75,59 @@ class UserActivitySerializer(serializers.ModelSerializer):
                 pass
             if not user:
                 user = User.objects.filter(firebase_uid=uid).first()
+<<<<<<< HEAD
             if user:
                 validated_data['user'] = user
                 if not validated_data.get('email'):
                     validated_data['email'] = user.email
         return super().create(validated_data)
+=======
+
+        action = validated_data.get('action')
+        if not action:
+            action = 'view_product'
+            if path:
+                if 'cart' in path.lower():
+                    action = 'add_to_cart'
+                elif 'checkout' in path.lower() or 'order' in path.lower():
+                    action = 'place_order'
+                elif 'review' in path.lower():
+                    action = 'write_review'
+
+        details = {
+            'email': email or (user.email if user else ''),
+            'page_type': page_type,
+            'path': path,
+            'duration': duration,
+            'metadata': metadata or {},
+            'screen_resolution': screen_resolution,
+        }
+
+        from .models import UserActivity
+        from company.models import Company
+        activity = UserActivity.objects.create(
+            company=company_obj or Company.objects.first(),
+            user=user,
+            action=action,
+            ip_address=ip_address,
+            user_agent=user_agent,
+            details=details
+        )
+        return activity
+
+    def to_representation(self, instance):
+        ret = super().to_representation(instance)
+        details = instance.details or {}
+        if isinstance(details, dict):
+            ret['email'] = details.get('email', '')
+            ret['pageType'] = details.get('page_type', '')
+            ret['page_type'] = details.get('page_type', '')
+            ret['path'] = details.get('path', '')
+            ret['duration'] = details.get('duration', 0)
+            ret['metadata'] = details.get('metadata', {})
+            ret['screenResolution'] = details.get('screen_resolution', '')
+        return ret
+>>>>>>> dev
 
     class Meta:
         model = UserActivity
@@ -67,6 +161,10 @@ class AdminProductSerializer(serializers.ModelSerializer):
     # Use CharFields to bypass PK validation
     brand = serializers.CharField(required=False, allow_null=True, write_only=True)
     category = serializers.CharField(required=False, allow_null=True, write_only=True)
+<<<<<<< HEAD
+=======
+    slug = serializers.CharField(required=False, allow_blank=True)
+>>>>>>> dev
 
     class Meta:
         model = Product
@@ -252,6 +350,14 @@ class ChatMessageSerializer(serializers.ModelSerializer):
 
 
 class ChatSessionSerializer(serializers.ModelSerializer):
+<<<<<<< HEAD
+=======
+    company = serializers.PrimaryKeyRelatedField(
+        queryset=__import__('company.models', fromlist=['Company']).Company.objects.all(),
+        required=False,
+        allow_null=True
+    )
+>>>>>>> dev
     messages = ChatMessageSerializer(many=True, read_only=True)
     unreadAdminCount = serializers.IntegerField(source='unread_admin_count', read_only=True)
     unreadUserCount = serializers.IntegerField(source='unread_user_count', read_only=True)
@@ -297,6 +403,7 @@ class StaffRoleSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class StaffMemberSerializer(serializers.ModelSerializer):
+<<<<<<< HEAD
     user_details = serializers.SerializerMethodField()
     role_details = StaffRoleSerializer(source='role', read_only=True)
 
@@ -305,12 +412,82 @@ class StaffMemberSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
     def get_user_details(self, obj):
+=======
+    user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all(), required=False, allow_null=True)
+    user_details = serializers.SerializerMethodField()
+    role_details = StaffRoleSerializer(source='role', read_only=True)
+
+    # Writable fields for user creation inline
+    email = serializers.EmailField(write_only=True, required=False)
+    name = serializers.CharField(write_only=True, required=False)
+    password = serializers.CharField(write_only=True, required=False)
+
+    class Meta:
+        model = StaffMember
+        fields = ('id', 'company', 'user', 'role', 'user_details', 'role_details', 'email', 'name', 'password', 'is_active', 'joined_at')
+        read_only_fields = ('company', 'joined_at')
+
+    def get_user_details(self, obj):
+        if not obj.user:
+            return None
+>>>>>>> dev
         return {
             'id': obj.user.id,
             'email': obj.user.email,
             'name': obj.user.name,
         }
 
+<<<<<<< HEAD
+=======
+    def create(self, validated_data):
+        email = validated_data.pop('email', None)
+        name = validated_data.pop('name', None)
+        password = validated_data.pop('password', None)
+        user = validated_data.get('user')
+
+        if not user:
+            if not email or not name:
+                raise serializers.ValidationError({"user": "This field is required or provide email and name to create a new user."})
+            # Create user inline
+            company = validated_data.get('company')
+            # Check if user already exists
+            user = User.objects.filter(email=email).first()
+            if user:
+                raise serializers.ValidationError({"email": "A user with this email already exists."})
+            user = User.objects.create_user(
+                email=email,
+                name=name,
+                password=password or 'tempPassWord123!',
+                company=company,
+                role='staff',
+                is_staff=True,
+                email_verified=True
+            )
+        
+        validated_data['user'] = user
+        return super().create(validated_data)
+
+    def update(self, instance, validated_data):
+        email = validated_data.pop('email', None)
+        name = validated_data.pop('name', None)
+        password = validated_data.pop('password', None)
+        is_active = validated_data.get('is_active')
+
+        user = instance.user
+        if user:
+            if email:
+                user.email = email
+            if name:
+                user.name = name
+            if password:
+                user.set_password(password)
+            if is_active is not None:
+                user.is_active = is_active
+            user.save()
+
+        return super().update(instance, validated_data)
+
+>>>>>>> dev
 class AdminBrandSerializer(serializers.ModelSerializer):
     category_ids = serializers.PrimaryKeyRelatedField(
         queryset=Category.objects.all(),

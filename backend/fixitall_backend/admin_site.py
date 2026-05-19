@@ -21,6 +21,15 @@ class FixItAllAdminSite(admin.AdminSite):
     site_title = "FixItAll Admin"
     index_title = "Dashboard"
 
+<<<<<<< HEAD
+=======
+    def has_permission(self, request):
+        """
+        Only superusers are allowed to access the Django admin backend.
+        """
+        return request.user.is_active and request.user.is_superuser
+
+>>>>>>> dev
     def get_app_list(self, request, app_label=None):
         """
         Override the default app list to group models into custom categories.

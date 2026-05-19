@@ -5,7 +5,11 @@ from .models import Category, Brand, Product, Order, OrderItem, HeroSetting, Wis
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
+<<<<<<< HEAD
         fields = ('id', 'name', 'slug', 'icon', 'description', 'image', 'subcategories', 'brands', 'sections')
+=======
+        fields = ('id', 'name', 'slug', 'icon', 'description', 'image', 'is_active', 'order')
+>>>>>>> dev
 
 
 class BrandSerializer(serializers.ModelSerializer):

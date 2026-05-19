@@ -31,6 +31,7 @@ export function startDjango() {
     console.log("Cleaning up existing Django processes...");
     const { execSync } = await import('child_process');
     try {
+<<<<<<< HEAD
       // Find and kill processes running Django runserver on 8000
       // Use pkill -9 -f for more reliability
       try {
@@ -51,6 +52,45 @@ export function startDjango() {
             try { process.kill(pid, 'SIGKILL'); } catch (e) { /* ignore */ }
           }
         }
+=======
+      if (process.platform === "win32") {
+        try {
+          const netstatOutput = execSync("netstat -ano").toString();
+          const lines = netstatOutput.split("\n");
+          for (const line of lines) {
+            if (line.includes(":8000") && line.includes("LISTENING")) {
+              const parts = line.trim().split(/\s+/);
+              const pid = parts[parts.length - 1];
+              if (pid && pid !== "0") {
+                console.log(`Killing existing process on port 8000 with PID: ${pid}`);
+                try { execSync(`taskkill /F /PID ${pid}`); } catch (e) {}
+              }
+            }
+          }
+        } catch (e) {}
+        try {
+          // Also kill any python processes running manage.py
+          execSync('taskkill /F /IM python.exe /T');
+        } catch (e) {}
+      } else {
+        try {
+          execSync("pkill -9 -f 'manage.py runserver'").toString();
+        } catch (e) {}
+        try {
+          const psOutput = execSync("ps aux | grep 'manage.py runserver' | grep -v grep").toString();
+          const lines = psOutput.split('\n');
+          for (const line of lines) {
+            const parts = line.trim().split(/\s+/);
+            if (parts.length > 1) {
+              const pid = parseInt(parts[1]);
+              if (!isNaN(pid)) {
+                console.log(`Killing existing Django process: ${pid}`);
+                try { process.kill(pid, 'SIGKILL'); } catch (e) {}
+              }
+            }
+          }
+        } catch (e) {}
+>>>>>>> dev
       }
     } catch (e) {
       // Ignore if no processes found
@@ -106,7 +146,11 @@ os.remove("get-pip.py")
     }
 
     console.log("Installing Python dependencies...");
+<<<<<<< HEAD
     await runCommand(pythonCmd, ["-m", "pip", "install", "--user", "django", "djangorestframework", "django-cors-headers", "django-filter", "celery", "redis", "google-genai"]);
+=======
+    await runCommand(pythonCmd, ["-m", "pip", "install", "--user", "django", "djangorestframework", "django-cors-headers", "django-filter", "celery", "redis", "google-genai", "django-jazzmin"]);
+>>>>>>> dev
 
     console.log("Running Django makemigrations...");
     await runCommand(pythonCmd, ["manage.py", "makemigrations", "account", "eadmin", "efrontend"]);
@@ -134,9 +178,16 @@ os.remove("get-pip.py")
       console.log("Starting Django server...");
       const logStream = fs.createWriteStream(path.join(process.cwd(), 'backend.log'), { flags: 'a' });
       logStream.write(`[${new Date().toISOString()}] Attempting to start Django on 8000...\n`);
+<<<<<<< HEAD
       const server = spawn(pythonCmd, ["manage.py", "runserver", "0.0.0.0:8000", "--noreload"], {
         cwd: backendDir,
         stdio: ["inherit", "pipe", "pipe"],
+=======
+      const server = spawn(pythonCmd, ["-u", "manage.py", "runserver", "0.0.0.0:8000", "--noreload"], {
+        cwd: backendDir,
+        stdio: ["inherit", "pipe", "pipe"],
+        env: { ...process.env, PYTHONUNBUFFERED: "1" }
+>>>>>>> dev
       });
 
       if (server.stdout) server.stdout.pipe(logStream);

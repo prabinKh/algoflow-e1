@@ -26,6 +26,20 @@ export const companyService = {
     }
   },
 
+<<<<<<< HEAD
+=======
+  async getCurrentCompany() {
+    try {
+      const response = await fetch("/api/store/current-company/");
+      if (!response.ok) throw new Error("Failed to fetch current company");
+      return await response.json() as Company;
+    } catch (error) {
+      console.error("Error fetching current company:", error);
+      return null;
+    }
+  },
+
+>>>>>>> dev
   async getMyCompanies() {
     try {
       const response = await fetch(`${API_BASE}/my_companies/`, {

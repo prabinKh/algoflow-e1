@@ -64,14 +64,24 @@ class ProductListView(generics.ListAPIView):
     ordering_fields = ['price', 'created_at', 'rating']
 
     def get_queryset(self):
+<<<<<<< HEAD
+=======
+        from company.models import Company
+>>>>>>> dev
         queryset = super().get_queryset()
         category = self.request.query_params.get('category')
         if category:
             queryset = queryset.filter(category__slug=category)
             
+<<<<<<< HEAD
         company = self.request.query_params.get('company')
         if company:
             queryset = queryset.filter(company__slug=company)
+=======
+        company_obj = Company.resolve_from_request(self.request)
+        if company_obj:
+            queryset = queryset.filter(company=company_obj)
+>>>>>>> dev
         return queryset
 
 
@@ -87,12 +97,20 @@ class HeroSettingView(generics.ListAPIView):
     permission_classes = (permissions.AllowAny,)
 
     def get_queryset(self):
+<<<<<<< HEAD
         qs = HeroSetting.objects.filter(is_active=True).order_by('order')
         company = self.request.query_params.get('company')
         if company:
             qs = qs.filter(company__slug=company)
         else:
             qs = qs.filter(company__isnull=True)
+=======
+        from company.models import Company
+        qs = HeroSetting.objects.filter(is_active=True).order_by('order')
+        company_obj = Company.resolve_from_request(self.request)
+        if company_obj:
+            qs = qs.filter(company=company_obj)
+>>>>>>> dev
         return qs
 
 
@@ -138,8 +156,21 @@ class OrderCreateView(views.APIView):
                 except Exception:
                     pass
             
+<<<<<<< HEAD
             item['_product'] = product
             company_id = company.id if company else None
+=======
+            # Fallback to the authenticated user's company (for POS/Admin)
+            if not company and request.user.is_authenticated:
+                if hasattr(request.user, 'company') and request.user.company:
+                    company = request.user.company
+
+            if not company:
+                return Response({'error': f'Could not determine company for product ID: {product_id}'}, status=status.HTTP_400_BAD_REQUEST)
+            
+            item['_product'] = product
+            company_id = company.id
+>>>>>>> dev
             if company_id not in company_items_map:
                 company_items_map[company_id] = {
                     'company': company,
@@ -267,10 +298,18 @@ class StoreLocationView(generics.ListAPIView):
     permission_classes = (permissions.AllowAny,)
 
     def get_queryset(self):
+<<<<<<< HEAD
         qs = StoreLocation.objects.all()
         company = self.request.query_params.get('company')
         if company:
             qs = qs.filter(company__slug=company)
+=======
+        from company.models import Company
+        qs = StoreLocation.objects.all()
+        company_obj = Company.resolve_from_request(self.request)
+        if company_obj:
+            qs = qs.filter(company=company_obj)
+>>>>>>> dev
         return qs
 
 
@@ -289,3 +328,18 @@ class AIRecommendationView(views.APIView):
         )
         from .serializers import AIRecommendationSerializer
         return Response(AIRecommendationSerializer(rec).data)
+<<<<<<< HEAD
+=======
+
+
+class CurrentCompanyView(views.APIView):
+    permission_classes = (permissions.AllowAny,)
+
+    def get(self, request):
+        from company.models import Company
+        from company.serializers import CompanyPublicSerializer
+        company = Company.resolve_from_request(request)
+        if company:
+            return Response(CompanyPublicSerializer(company).data)
+        return Response({'detail': 'No company active'}, status=status.HTTP_404_NOT_FOUND)
+>>>>>>> dev

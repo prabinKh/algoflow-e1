@@ -17,14 +17,24 @@ export const useProducts = () => {
   const allProducts = useMemo(() => {
     if (!Array.isArray(dbProducts)) return [];
     return dbProducts.map(p => {
+<<<<<<< HEAD
       const categoryName = typeof p.category === 'string' ? p.category : (p.category_name || String(p.category || ''));
       const categorySlug = p.categorySlug || p.category_slug || (typeof p.category === 'string' ? p.category.toLowerCase().replace(/\s+/g, '-') : '');
+=======
+      const categoryName = p.category_name || (typeof p.category === 'string' ? p.category : String(p.category || ''));
+      const categorySlug = p.categorySlug || p.category_slug || '';
+      const brandName = p.brand_name || (typeof p.brand === 'string' ? p.brand : String(p.brand || ''));
+>>>>>>> dev
       
       return {
         ...p,
         category: categoryName,
         categorySlug: categorySlug,
+<<<<<<< HEAD
         brand: p.brand || ''
+=======
+        brand: brandName
+>>>>>>> dev
       };
     });
   }, [dbProducts]);

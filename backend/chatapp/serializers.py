@@ -50,5 +50,9 @@ class ChatSessionSerializer(serializers.ModelSerializer):
             "user_email": {"required": False, "allow_null": True, "allow_blank": True},
             "user_id_str": {"required": False, "allow_blank": True, "default": ""},
             "user_name": {"required": False, "allow_blank": True, "default": "Guest"},
+<<<<<<< HEAD
+=======
+            "company": {"required": False},
+>>>>>>> dev
         }
 

@@ -28,6 +28,28 @@ class ChatSessionViewSet(viewsets.ModelViewSet):
 
         return ChatSession.objects.none()
 
+<<<<<<< HEAD
+=======
+    def get_object(self):
+        import uuid
+        from django.http import Http404
+        from django.core.exceptions import ValidationError
+        pk = self.kwargs.get("pk")
+        try:
+            uuid.UUID(str(pk))
+        except ValueError:
+            raise Http404("Invalid UUID format")
+        try:
+            return super().get_object()
+        except ValidationError:
+            raise Http404("Invalid UUID")
+
+    def perform_create(self, serializer):
+        from company.models import Company
+        company = Company.resolve_from_request(self.request)
+        serializer.save(company=company)
+
+>>>>>>> dev
     def perform_update(self, serializer):
         instance = serializer.save()
         if self.request.data.get("unreadAdminCount") == 0 or self.request.data.get("unread_admin_count") == 0:
@@ -47,9 +69,34 @@ class ChatMessageViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         session_id = self.request.query_params.get("session_id")
         if session_id:
+<<<<<<< HEAD
             return ChatMessage.objects.filter(session_id=session_id).order_by("timestamp")
         return ChatMessage.objects.none()
 
+=======
+            import uuid
+            try:
+                uuid.UUID(str(session_id))
+                return ChatMessage.objects.filter(session_id=session_id).order_by("timestamp")
+            except ValueError:
+                return ChatMessage.objects.none()
+        return ChatMessage.objects.none()
+
+    def get_object(self):
+        import uuid
+        from django.http import Http404
+        from django.core.exceptions import ValidationError
+        pk = self.kwargs.get("pk")
+        try:
+            uuid.UUID(str(pk))
+        except ValueError:
+            raise Http404("Invalid UUID format")
+        try:
+            return super().get_object()
+        except ValidationError:
+            raise Http404("Invalid UUID")
+
+>>>>>>> dev
     def perform_create(self, serializer):
         message = serializer.save()
         session = message.session
@@ -66,3 +113,7 @@ class ChatMessageViewSet(viewsets.ModelViewSet):
                 generate_ai_response.delay(message.session.id, message.text)
             except Exception:
                 pass
+<<<<<<< HEAD
+=======
+
+>>>>>>> dev

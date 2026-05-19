@@ -49,6 +49,14 @@ async function startServer() {
       timeout: 30000,
       on: {
         proxyReq: (proxyReq, req, res) => {
+<<<<<<< HEAD
+=======
+          // Forward the original Host header as X-Forwarded-Host for SaaS multi-tenant IP resolution
+          const clientHost = req.headers.host;
+          if (clientHost) {
+            proxyReq.setHeader('X-Forwarded-Host', clientHost);
+          }
+>>>>>>> dev
           // Log proxy start
           const log = `Proxying ${req.method} ${req.url} -> http://127.0.0.1:8000${req.url}\n`;
           process.stdout.write(log);

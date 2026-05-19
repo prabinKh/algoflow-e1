@@ -92,6 +92,7 @@ class ReviewAdmin(admin.ModelAdmin):
 
 
 class StoreLocationAdmin(VendorRestrictedAdmin):
+<<<<<<< HEAD
     list_display = ('name', 'company', 'city', 'phone', 'email')
     list_filter = ('company',)
     search_fields = ('name', 'city', 'company__name')
@@ -100,6 +101,16 @@ class StoreLocationAdmin(VendorRestrictedAdmin):
 class AIRecommendationAdmin(admin.ModelAdmin):
     list_display = ('user', 'query', 'created_at')
     search_fields = ('query', 'user__email')
+=======
+    list_display = ('name', 'company', 'address', 'phone')
+    list_filter = ('company',)
+    search_fields = ('name', 'address', 'company__name')
+
+
+class AIRecommendationAdmin(admin.ModelAdmin):
+    list_display = ('user', 'product', 'score', 'reason', 'created_at')
+    search_fields = ('product__name', 'user__email', 'reason')
+>>>>>>> dev
     readonly_fields = ('created_at',)
 
 

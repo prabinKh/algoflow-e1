@@ -15,6 +15,10 @@ DEBUG = os.getenv("DJANGO_DEBUG", "True").lower() == "true"
 ALLOWED_HOSTS = os.getenv("DJANGO_ALLOWED_HOSTS", "*").split(",")
 
 INSTALLED_APPS = [
+<<<<<<< HEAD
+=======
+    "jazzmin",
+>>>>>>> dev
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -147,3 +151,66 @@ CELERY_TASK_ALWAYS_EAGER = True
 
 EMAIL_BACKEND = os.getenv("EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend")
 DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "noreply@fixitall.local")
+<<<<<<< HEAD
+=======
+
+# django-jazzmin settings configuration
+JAZZMIN_SETTINGS = {
+    "site_title": "FixItAll Admin",
+    "site_header": "FixItAll",
+    "site_brand": "FixItAll Multi-Tenant",
+    "welcome_sign": "Welcome to FixItAll Multi-Tenant Admin",
+    "copyright": "FixItAll Corporation Ltd",
+    "search_model": ["account.MyUser"],
+    "show_sidebar": True,
+    "navigation_expanded": True,
+    "order_with_respect_to": ["company", "account", "eadmin", "chatapp"],
+    "icons": {
+        "auth": "fas fa-users-cog",
+        "auth.Group": "fas fa-users",
+        "account.MyUser": "fas fa-user-tie",
+        "company.Company": "fas fa-building",
+        "eadmin.Product": "fas fa-cubes",
+        "eadmin.Category": "fas fa-tags",
+        "chatapp.ChatSession": "fas fa-comments",
+        "chatapp.ChatMessage": "fas fa-comment-alt",
+    },
+    "default_icon_parents": "fas fa-chevron-circle-right",
+    "default_icon_children": "fas fa-circle",
+    "show_ui_builder": True,
+    "changeform_format": "horizontal_tabs",
+}
+
+JAZZMIN_UI_TWEAKS = {
+    "navbar_small_text": False,
+    "footer_small_text": False,
+    "body_small_text": False,
+    "brand_small_text": False,
+    "brand_colour": "navbar-indigo navbar-dark",
+    "accent": "accent-primary",
+    "navbar": "navbar-indigo navbar-dark",
+    "no_navbar_border": False,
+    "navbar_fixed": True,
+    "layout_boxed": False,
+    "footer_fixed": False,
+    "sidebar_fixed": True,
+    "sidebar": "sidebar-dark-indigo",
+    "sidebar_nav_small_text": False,
+    "sidebar_disable_expand": False,
+    "sidebar_nav_child_indent": True,
+    "sidebar_nav_compact_style": False,
+    "sidebar_nav_legacy_style": False,
+    "sidebar_nav_flat_style": False,
+    "theme": "flatly",
+    "dark_mode_theme": "darkly",
+    "button_classes": {
+        "primary": "btn-primary",
+        "secondary": "btn-secondary",
+        "info": "btn-info",
+        "warning": "btn-warning",
+        "danger": "btn-danger",
+        "success": "btn-success"
+    }
+}
+
+>>>>>>> dev

@@ -103,7 +103,11 @@ const POS = () => {
       .sort()
       .map(cat => ({
         name: cat,
+<<<<<<< HEAD
         icon: renderCategoryIcon(cat),
+=======
+        icon: getCategoryIcon(cat),
+>>>>>>> dev
         color: getCategoryColor(cat as string)
       }))
   ];

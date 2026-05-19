@@ -2,13 +2,31 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 import { authService } from "@/api/authService";
 import { setCartUserId } from "@/stores/cart";
 
+<<<<<<< HEAD
 interface User {
+=======
+export interface UserCompany {
+  id: string;
+  slug: string;
+  name: string;
+  theme_color?: string;
+}
+
+export interface User {
+>>>>>>> dev
   id: string;
   email: string;
   name: string;
   is_staff: boolean;
   is_superuser: boolean;
+<<<<<<< HEAD
   email_verified: boolean;
+=======
+  is_admin: boolean;
+  email_verified: boolean;
+  role: string;
+  company: UserCompany | null;
+>>>>>>> dev
 }
 
 interface AuthContextType {

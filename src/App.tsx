@@ -63,6 +63,10 @@ import CreateCompany from "./frontend/company/CreateCompany";
 import CompanyProfile from "./frontend/company/CompanyProfile";
 import CompanyList from "./frontend/company/CompanyList";
 import StoreFront from "./frontend/StoreFront";
+<<<<<<< HEAD
+=======
+import { StoreProvider } from "./frontend/context/StoreContext";
+>>>>>>> dev
 import { ScrollToTop } from "@/components/ScrollToTop";
 import { ScrollToTopOnMount } from "@/components/ScrollToTopOnMount";
 import { useEffect } from "react";
@@ -199,7 +203,13 @@ export default function App() {
                 </Helmet>
                 <ChatWidget />
                 <ErrorBoundary>
+<<<<<<< HEAD
                   <AppContent />
+=======
+                  <StoreProvider>
+                    <AppContent />
+                  </StoreProvider>
+>>>>>>> dev
                 </ErrorBoundary>
               </Router>
             </TooltipProvider>

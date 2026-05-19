@@ -8,20 +8,51 @@ import {
   RotateCcw,
   ChevronLeft,
   ChevronRight,
+<<<<<<< HEAD
+=======
+  Filter,
+>>>>>>> dev
 } from "lucide-react";
 import { motion } from "motion/react";
 import { toast } from "sonner";
 import { useGSAPReveal } from "@/hooks/useGSAP";
 import { useStaff } from "@/hooks/useStaff";
 
+<<<<<<< HEAD
+=======
+const AVAILABLE_PERMISSIONS = [
+  "dashboard:view",
+  "products:read",
+  "products:write",
+  "orders:read",
+  "orders:write",
+  "customers:read",
+  "pos:access",
+  "staff:manage",
+  "reports:view",
+  "settings:manage"
+];
+
+>>>>>>> dev
 const Roles = () => {
   const { setIsSidebarOpen } = useOutletContext<{ setIsSidebarOpen: (open: boolean) => void }>();
   const containerRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [entriesPerPage, setEntriesPerPage] = useState(10);
+<<<<<<< HEAD
   
   const { roles, loading, deleteRole } = useStaff();
+=======
+
+  // Modal States
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingRole, setEditingRole] = useState<any>(null);
+  const [roleName, setRoleName] = useState("");
+  const [selectedPermissions, setSelectedPermissions] = useState<string[]>([]);
+  
+  const { roles, loading, deleteRole, createRole, updateRole } = useStaff();
+>>>>>>> dev
 
   useGSAPReveal(containerRef, ".gsap-reveal", { opacity: 0, y: 20, duration: 0.6, stagger: 0.05 });
 
@@ -31,11 +62,25 @@ const Roles = () => {
   );
 
   const handleAddRole = () => {
+<<<<<<< HEAD
     toast.info("Role creation modal would open here.");
   };
 
   const handleEditRole = (role: any) => {
     toast.info(`Editing ${role.name}`);
+=======
+    setEditingRole(null);
+    setRoleName("");
+    setSelectedPermissions([]);
+    setIsModalOpen(true);
+  };
+
+  const handleEditRole = (role: any) => {
+    setEditingRole(role);
+    setRoleName(role.name);
+    setSelectedPermissions(role.permissions || []);
+    setIsModalOpen(true);
+>>>>>>> dev
   };
 
   const handleDeleteRole = (role: any) => {
@@ -44,6 +89,34 @@ const Roles = () => {
     }
   };
 
+<<<<<<< HEAD
+=======
+  const handleSaveRole = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!roleName.trim()) {
+      toast.error("Role name is required");
+      return;
+    }
+    
+    try {
+      if (editingRole) {
+        await updateRole.mutateAsync({
+          id: editingRole.id,
+          data: { name: roleName, permissions: selectedPermissions }
+        });
+      } else {
+        await createRole.mutateAsync({
+          name: roleName,
+          permissions: selectedPermissions
+        });
+      }
+      setIsModalOpen(false);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+>>>>>>> dev
   const handleBulkDelete = () => {
     toast.error("Bulk delete initiated");
   };
@@ -196,7 +269,11 @@ const Roles = () => {
 
               {/* Pagination */}
               <div className="p-4 border-t border-border flex items-center justify-between">
+<<<<<<< HEAD
                 <p className="text-sm text-muted-foreground">Showing 1 to 3 of 3 entries</p>
+=======
+                <p className="text-sm text-muted-foreground">Showing 1 to {filteredRoles.length} of {filteredRoles.length} entries</p>
+>>>>>>> dev
                 <div className="flex items-center gap-2">
                   <button className="p-2 text-muted-foreground hover:bg-accent rounded-lg transition-colors border border-border">
                     <ChevronLeft size={16} />
@@ -210,6 +287,70 @@ const Roles = () => {
             </div>
           </div>
         </main>
+<<<<<<< HEAD
+=======
+
+        {/* Create/Edit Role Modal */}
+        {isModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <div className="bg-card border border-border rounded-3xl p-6 w-full max-w-lg shadow-2xl relative">
+              <h3 className="text-xl font-bold text-foreground mb-4">
+                {editingRole ? "Edit Role" : "Create New Role"}
+              </h3>
+              <form onSubmit={handleSaveRole} className="space-y-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Role Name</label>
+                  <input
+                    type="text"
+                    value={roleName}
+                    onChange={(e) => setRoleName(e.target.value)}
+                    placeholder="e.g., Inventory Manager"
+                    className="w-full bg-accent/50 border border-border rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 text-foreground"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-2">Permissions</label>
+                  <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto pr-2 no-scrollbar">
+                    {AVAILABLE_PERMISSIONS.map((perm) => (
+                      <label key={perm} className="flex items-center gap-2 p-2 rounded-lg hover:bg-muted cursor-pointer transition-colors border border-transparent hover:border-border">
+                        <input
+                          type="checkbox"
+                          checked={selectedPermissions.includes(perm)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedPermissions(prev => [...prev, perm]);
+                            } else {
+                              setSelectedPermissions(prev => prev.filter(p => p !== perm));
+                            }
+                          }}
+                          className="rounded border-border text-emerald-500 focus:ring-emerald-500"
+                        />
+                        <span className="text-xs font-medium text-foreground capitalize">{perm.replace(":", " ")}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+                <div className="flex items-center justify-end gap-3 pt-4 border-t border-border mt-6">
+                  <button
+                    type="button"
+                    onClick={() => setIsModalOpen(false)}
+                    className="px-4 py-2 border border-border hover:bg-accent rounded-xl text-xs font-bold uppercase tracking-wider transition-colors text-foreground"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={createRole.isPending || updateRole.isPending}
+                    className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-xs font-bold uppercase tracking-wider shadow-lg shadow-emerald-500/20 transition-all active:scale-95 disabled:opacity-50"
+                  >
+                    {createRole.isPending || updateRole.isPending ? "Saving..." : "Save Role"}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+>>>>>>> dev
       </div>
   );
 };

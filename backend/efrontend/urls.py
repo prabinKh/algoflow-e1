@@ -3,10 +3,18 @@ from .views import (
     CategoryListView, CategoryDetailView, BrandListView, BrandDetailView, 
     ProductListView, ProductDetailView, HeroSettingView, OrderCreateView, 
     OrderTrackView, MyOrdersView, WishlistViewSet, ReviewViewSet, 
+<<<<<<< HEAD
     StoreLocationView, AIRecommendationView
 )
 
 urlpatterns = [
+=======
+    StoreLocationView, AIRecommendationView, CurrentCompanyView
+)
+
+urlpatterns = [
+    path('current-company/', CurrentCompanyView.as_view(), name='current-company'),
+>>>>>>> dev
     path('categories/', CategoryListView.as_view(), name='category-list'),
     path('categories/<slug:slug>/', CategoryDetailView.as_view(), name='category-detail'),
     path('brands/', BrandListView.as_view(), name='brand-list'),

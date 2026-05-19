@@ -221,7 +221,19 @@ class CustomTokenObtainPairView(TokenObtainPairView):
                 'name': user.name,
                 'email_verified': user.email_verified,
                 'is_staff': user.is_staff,
+<<<<<<< HEAD
                 'is_superuser': user.is_superuser
+=======
+                'is_superuser': user.is_superuser,
+                'is_admin': user.is_admin,
+                'role': user.role,
+                'company': {
+                    'id': str(user.company.id),
+                    'slug': user.company.slug,
+                    'name': user.company.name,
+                    'theme_color': user.company.theme_color,
+                } if user.company else None,
+>>>>>>> dev
             }
         }, status=status.HTTP_200_OK)
         
@@ -492,6 +504,7 @@ class IsAuthenticatedView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
+<<<<<<< HEAD
         return Response({
             'authenticated': True,
             'user': {
@@ -501,6 +514,26 @@ class IsAuthenticatedView(APIView):
                 'is_staff': request.user.is_staff,
                 'is_superuser': request.user.is_superuser,
                 'email_verified': request.user.email_verified
+=======
+        user = request.user
+        return Response({
+            'authenticated': True,
+            'user': {
+                'id': str(user.id),
+                'email': user.email,
+                'name': user.name,
+                'is_staff': user.is_staff,
+                'is_superuser': user.is_superuser,
+                'is_admin': user.is_admin,
+                'email_verified': user.email_verified,
+                'role': user.role,
+                'company': {
+                    'id': str(user.company.id),
+                    'slug': user.company.slug,
+                    'name': user.company.name,
+                    'theme_color': user.company.theme_color,
+                } if user.company else None,
+>>>>>>> dev
             }
         }, status=status.HTTP_200_OK)
 
